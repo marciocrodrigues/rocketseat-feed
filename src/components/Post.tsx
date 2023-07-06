@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { ChangeEvent, FormEvent, InvalidEvent, useState } from "react";
 import { format, formatDistanceToNow } from "date-fns"; // Para formatar data
 import ptBR from "date-fns/locale/pt-BR";
 
@@ -7,9 +7,27 @@ import { Comment } from "./Comment";
 
 import styles from "./Post.module.css";
 
-export function Post({ author, content, publishedAt }) {
-  const [comments, setComments] = useState([]);
-  const [newCommentText, setNewCommentText] = useState("");
+interface Author {
+  name: string;
+  role: string;
+  avatarUrl: string;
+}
+
+interface Content {
+  type: "paragraph" | "link";
+  content: string;
+}
+
+export interface PostProps {
+  id?: number;
+  author: Author;
+  content: Content[];
+  publishedAt: Date;
+}
+
+export function Post({ author, content, publishedAt }: PostProps) {
+  const [comments, setComments] = useState<string[]>([]);
+  const [newCommentText, setNewCommentText] = useState<string>("");
 
   const publishedDateFormated = format(
     publishedAt,
@@ -24,23 +42,25 @@ export function Post({ author, content, publishedAt }) {
     addSuffix: true,
   });
 
-  function handleNewCommentText() {
+  function handleNewCommentText(event: ChangeEvent<HTMLTextAreaElement>) {
     event.target.setCustomValidity("");
     setNewCommentText(event.target.value);
   }
 
-  function handleCreateNewComment(e) {
+  function handleCreateNewComment(event: FormEvent) {
     event.preventDefault();
     setComments([...comments, newCommentText]);
     setNewCommentText("");
   }
 
-  function handleNewCommentInvalid() {
+  function handleNewCommentInvalid(event: InvalidEvent<HTMLTextAreaElement>) {
     event.target.setCustomValidity("Esse campo é obrigatorio");
   }
 
-  function onDeleteComment(comment) {
-    const commentsWithoutDeletedOne = comments.filter((x) => x !== comment);
+  function onDeleteComment(commentToDelete: string) {
+    const commentsWithoutDeletedOne = comments.filter(
+      (x) => x !== commentToDelete
+    );
     setComments(commentsWithoutDeletedOne);
   }
 
@@ -67,7 +87,7 @@ export function Post({ author, content, publishedAt }) {
         </header>
 
         <div className={styles.content}>
-          {content.map((line, index) => {
+          {content.map((line: Content, index: number) => {
             if (line.type === "paragraph") {
               return <p key={index}>{line.content}</p>;
             } else if (line.type === "link") {
